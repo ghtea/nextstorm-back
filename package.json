@@ -1,0 +1,33 @@
+{
+  "name": "api-hots-restful",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "scripts": {
+    "start": "babel-node src/app.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-node": "^0.0.1-security",
+    "babel-preset-env": "^1.7.0",
+    "babel-preset-stage-3": "^6.24.1"
+  },
+  "dependencies": {
+    "axios": "^0.19.2",
+    "cookie-parser": "^1.4.5",
+    "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "heroes-talents": "git+https://git@github.com/heroespatchnotes/heroes-talents.git",
+    "joi": "^17.1.1",
+    "jsonwebtoken": "^8.5.1",
+    "mongoose": "^5.9.21",
+    "passport": "^0.4.1",
+    "passport-bnet": "^2.0.0",
+    "query-string": "^6.13.1",
+    "uuid": "^8.3.0",
+    "uuidv4": "^6.2.0"
+  }
+}
