@@ -36,6 +36,13 @@ const getPlayerGeneralEachRegion = async (battletag, nameRegion) => {
 		    const url = `https://api.heroesprofile.com/api/Player/MMR/Role?mode=json&battletag=${urlBattletag}&region=${idRegion}&role=${role}&api_token=${process.env.TOKEN_HP}`	
 		    const res = await axios.get(url);
 		    result[role] = res['data'][battletag]
+		    
+		    // 데이터가 없을때, Support: []   로 나오기 때문에 이걸 캐치!
+		    if ( Array.isArray( result[role] ) && result[role].length === 0 ) {
+		    	result[role] = {}
+		    	
+		    } // if
+		    
 		  }
 	  	
 	  	
