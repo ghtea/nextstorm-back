@@ -34,9 +34,26 @@ router.get('/', (req, res) => {
   
   
   const query = req.query;
+  
+  const listSort = query.listSort || []; // 
+  let limitEach = 0; //  매번 한번에 가져올 갯수
+  let skipEntire = 0; // 이미 프론트가 받은 총량  300
+  
+  if (query.limitEach) { limitEach = parseInt(query.limitEach) }
+  if (query.skipEntire) { skipEntire = parseInt(query.skipEntire) }
+ 
+  
+  
+  const filterAuthor = (query.idAuthor)? 
+    { author: query.idAuthor }
+    : {  };
+    
+  const filterUserLike = (query.idUserLike)? 
+    { listUserLike: query.idUserLike }
+    : {  };
     
   const filterSize = (query.filterSize && query.filterSize.length !== 0 )? 
-    { size: { $in: query.filterSize } }
+    { size: { $in: query.filterSize.map(element => parseInt(element)) } }
     : {  };
     
   const filterTag = (query.filterTag && query.filterTag.length !== 0 )? 
@@ -60,13 +77,78 @@ router.get('/', (req, res) => {
      , filterMap
      , filterHero
      
+     , filterAuthor
+     , filterUserLike
     ]
     
   };
   
-  //console.log(filter)
   
-  Comp.find(filter, (err, listComp) => {
+  // https://stackoverflow.com/questions/4421207/how-to-get-the-last-n-records-in-mongodb
+  // https://docs.mongodb.com/manual/reference/operator/aggregation/sort/
+  // https://stackoverflow.com/questions/24160037/skip-and-limit-in-aggregation-framework
+  let pipeline = [ {"$match": filter} ]
+    
+  if (listSort.length >0 ) {
+    let objAddFields ={};
+    let objSort = {};
+  
+    
+    if ( listSort.includes("numberLike") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objAddFields['numberLike'] = { $size: "$listUserLike" }
+      objSort['numberLike'] = -1;
+      
+    } // if "numberLike"
+    
+    if ( listSort.includes("updatedNew") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objSort['updated'] = -1;
+    } // if "createdNew"
+    
+    if ( listSort.includes("createdNew") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objSort['created'] = -1;
+    } // if "createdNew"
+    
+    if ( listSort.includes("createdOld") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objSort['created'] = 1;
+    } // if "createdNew"
+      
+      // 여러 묶기
+      if (listSort.includes("numberLike")) {
+        pipeline.push({
+          $addFields: objAddFields
+        })
+      }
+      
+      pipeline.push({
+        $sort: objSort
+      })
+      
+      
+  } // if listSort.length >0  
+  else { // default sorting
+    pipeline.push({
+        $sort: {created: -1}
+      })
+  }
+  
+  
+  if (limitEach !== 0) {
+    pipeline.push({
+      "$limit": skipEntire + limitEach
+    })
+  }
+  if (skipEntire !== 0) {
+    pipeline.push({
+      "$skip": skipEntire
+    })
+  }
+  
+  
+  
+  //const pipelineTest = [ pipeline[1] ]
+  //console.log(pipelineTest[0]['$match']['$and'][0]['size']['$in'])
+  
+  Comp.aggregate(pipeline, (err, listComp) => {
     if (err) return res.status(500).send({
       error: 'database failure'
     });
@@ -74,6 +156,8 @@ router.get('/', (req, res) => {
   })
   
 });
+
+
 
 
 

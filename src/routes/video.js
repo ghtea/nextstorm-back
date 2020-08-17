@@ -33,11 +33,31 @@ router.get('/', (req, res) => {
   
   
   const query = req.query;
+  
+  const listSort = query.listSort || []; // 
+  let limitEach = 0; //  매번 한번에 가져올 갯수
+  let skipEntire = 0; // 이미 프론트가 받은 총량  300
+  
+  if (query.limitEach) { limitEach = parseInt(query.limitEach) }
+  if (query.skipEntire) { skipEntire = parseInt(query.skipEntire) }
+  
     
   const filterSubject = (query.modelSubject && query.idSubject)? 
     { 
       "subject._id": query.idSubject
       ,  "subject.model": query.modelSubject
+    }
+    : {  };
+    
+  const filterAuthor = (query.idAuthor)? 
+    { 
+      author: query.idAuthor
+    }
+    : {  };
+    
+  const filterUserLike = (query.idUserLike)? 
+    { 
+      listUserLike: query.idUserLike
     }
     : {  };
     
@@ -47,14 +67,71 @@ router.get('/', (req, res) => {
     $and : [
       
      filterSubject
+     , filterAuthor
+     , filterUserLike
      
     ]
     
   };
   
-  //console.log(filterSubject)
+  let pipeline = [ {"$match": filter} ]
+    
+  if (listSort.length >0 ) {
+    let objAddFields ={};
+    let objSort = {};
+ 
+    
+    if ( listSort.includes("numberLike") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+    
+      objAddFields['numberLike'] = { $size: "$listUserLike" }
+      objSort['numberLike'] = -1;
+      
+    } // if "numberLike"
+    
+    if ( listSort.includes("updatedNew") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objSort['updated'] = -1;
+    } // if "createdNew"
+    
+    if ( listSort.includes("createdNew") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objSort['created'] = -1;
+    } // if "createdNew"
+    
+    if ( listSort.includes("createdOld") ) { // [ ] 안에 "numberLike", "createdNew", "createdOld"
+      objSort['created'] = 1;
+    } // if "createdNew"
+      
+      // 여러 묶기
+      if (listSort.includes("numberLike")) {
+        pipeline.push({
+          $addFields: objAddFields
+        })
+      }
+      
+      pipeline.push({
+        $sort: objSort
+      })
+      
+      
+  } // if listSort.length >0  
+  else { // default sorting
+    pipeline.push({
+        $sort: {created: -1}
+      })
+  }
+      
+  if (limitEach !== 0) {
+    pipeline.push({
+      "$limit": skipEntire + limitEach
+    })
+  }
+  if (skipEntire !== 0) {
+    pipeline.push({
+      "$skip": skipEntire
+    })
+  }
   
-  Video.find(filter, (err, listVideo) => {
+      
+  Video.aggregate(pipeline, (err, listVideo) => {
     if (err) return res.status(500).send({
       error: 'database failure'
     });
@@ -63,6 +140,9 @@ router.get('/', (req, res) => {
   
 });
 
+
+  
+  
   
 // CREATE
 router.post('/', async (req, res, next) => {
@@ -178,7 +258,7 @@ router.put('/like', async (req, res, next) => {
     
     if (how !== 'false') {
       updateUser = {
-        $addToSet: { "likes.listidVideo": idVideo }
+        $addToSet: { "likes.listIdVideo": idVideo }
       }
       updateVideo = {
         $addToSet: { "listUserLike": idUser }
@@ -186,7 +266,7 @@ router.put('/like', async (req, res, next) => {
     }
     else {
       updateUser = {
-        $pull: { "likes.listidVideo": idVideo }
+        $pull: { "likes.listIdVideo": idVideo }
       }
       updateVideo = {
         $pull: { "listUserLike": idUser }
