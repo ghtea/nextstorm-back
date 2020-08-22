@@ -123,7 +123,7 @@ router.put('/profile/:idUser', async (req, res, next) => {
     
     const shape = query.shape; 
     const palette = query.palette; 
-    const border = query.border; 
+    const badge = query.badge; 
     
     
     const filter = { _id : idUser }
@@ -140,7 +140,7 @@ router.put('/profile/:idUser', async (req, res, next) => {
     
     const listIdShapeBefore = foundUser.profile.listIdShape;
     const listIdPaletteBefore = foundUser.profile.listIdPalette;
-    const listIdBorderBefore = foundUser.profile.listIdBorder;
+    const listIdBadgeBefore = foundUser.profile.listIdBadge;
     
     let listIdShapeNew = listIdShapeBefore.filter(element => element !== shape);
     listIdShapeNew.unshift(shape);
@@ -148,8 +148,8 @@ router.put('/profile/:idUser', async (req, res, next) => {
     let listIdPaletteNew = listIdPaletteBefore.filter(element => element !== shape);
     listIdPaletteNew.unshift(palette);
     
-    let listIdBorderNew = listIdBorderBefore.filter(element => element !== shape);
-    listIdBorderNew.unshift(border);  
+    let listIdBadgeNew = listIdBadgeBefore.filter(element => element !== shape);
+    listIdBadgeNew.unshift(badge);  
     
     
     const update = {
@@ -157,7 +157,7 @@ router.put('/profile/:idUser', async (req, res, next) => {
       profile: {
         listIdShape: listIdShapeNew
         , listIdPalette: listIdPaletteNew
-        , listIdBorder: listIdBorderNew
+        , listIdBadge: listIdBadgeNew
       }
       
     };

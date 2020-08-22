@@ -12,7 +12,7 @@ const hash = (password) => {
   return crypto.createHmac('sha256', process.env.SECRET_KEY).update(password).digest('hex');
 }
 
-
+/*
 
 const schemaRegionMmr = new Schema({
   _id: { type: String, default: uuidv4() }
@@ -31,12 +31,13 @@ const schemaMmr = new Schema({
   , orderMainRegion: [String]  // only regions which have more than 100 games, sorting 'more games - more front'
 });
 
-
+*/
 
 const User = new Schema({
 	
   //username: String
-  _id: { type: String, default: uuidv4() }
+  _id: String
+  , type: { type: String, default: "normal" } 
   
   , email: { type: String }
   , passwordHashed: String // 비밀번호를 해싱해서 저장합니다
@@ -45,8 +46,8 @@ const User = new Schema({
   , battletagConfirmed: String
   , whenBattletagPendingAdded: Date
   
-  , mmr: schemaMmr
-  , updatedMmr: Date
+  //, mmr: schemaMmr
+  //, updatedMmr: Date
   
   
   
@@ -60,7 +61,7 @@ const User = new Schema({
     listIdPalette: { type: [String] , default: ['Default'] }
     // hero, universe 등을 표현하는 두가지 색상 컬러  // 맨 앞의 것이 현재 설정한 것
     , listIdShape: { type: [String] , default: ['Default'] }
-    , listIdBorder: { type: [String] , default: ['Default'] }
+    , listIdBadge: { type: [String] , default: ['Default'] }
   }
   
   , works: {
@@ -115,6 +116,7 @@ User.statics.register = async function ( payload ) {
   
   const mongoUser = new this({
       _id: payload._id
+      , type: "normal"
     
       , email: payload.email
       , passwordHashed: hash(payload.password)

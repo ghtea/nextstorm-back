@@ -41,6 +41,10 @@ router.get('/', (req, res) => {
   if (query.limitEach) { limitEach = parseInt(query.limitEach) }
   if (query.skipEntire) { skipEntire = parseInt(query.skipEntire) }
   
+  
+  const filterReport = (query.idUser)?
+    { listUserReport: { $nin: [query.idUser] }  }
+    : {  };
     
   const filterSubject = (query.modelSubject && query.idSubject)? 
     { 
@@ -66,9 +70,10 @@ router.get('/', (req, res) => {
     
     $and : [
       
-     filterSubject
-     , filterAuthor
-     , filterUserLike
+      filterReport
+      , filterSubject
+      , filterAuthor
+      , filterUserLike
      
     ]
     
@@ -160,6 +165,9 @@ router.post('/', async (req, res, next) => {
           , type: req.body.type
           , urlContent:  req.body.urlContent
           , idContent:  req.body.idContent
+          
+          , listUserLike: []
+          , listUserReport: []
           
           , created: Date.now()
           , updated: Date.now()
@@ -295,6 +303,73 @@ router.put('/like', async (req, res, next) => {
     }
     
     res.send("successfully updated user and video")
+    
+  } catch(error) {next(error)}
+  
+});
+
+
+
+router.put('/report/:idVideo', async (req, res, next) => {
+  try {
+  
+    const query = req.query;
+    
+    const idVideo = req.params.idVideo;
+    const idUser = query.idUser;  
+    const typeUser = query.typeUser;  
+    
+    
+    const filter = { _id:idVideo};
+    let update = { $addToSet: { "listUserReport": idUser } };
+    
+    
+    try {
+      const foundVideo = await Video.findOne(filter);
+      console.log(foundVideo);
+      let lengthReportAlready = 0;
+      if (foundVideo.listUserReport) {
+        lengthReportAlready = foundVideo.listUserReport.length;
+      }
+      
+      let lengthLike = 0;
+      if (foundVideo.listUserLike) {
+        lengthLike = foundVideo.listUserLike.length;
+      }
+      
+      //console.log(lengthReportAlready);
+      //console.log(lengthLike);
+      if (lengthReportAlready >= lengthLike * 5 + 5 || typeUser === 'administrator') {
+        // 리포트 수가 좋아요 대비해서 너무 많으면 삭제 or 관리자이면
+        await Video.deleteOne(filter);
+        
+        
+        const filterUser = {
+          "works.listIdVideo": idVideo
+        };
+        const updateUser = {
+          $pull: {
+            "works.listIdVideo": idVideo
+          }
+        };
+        await User.updateOne(filterUser, updateUser);
+        
+        
+        console.log("successfully delete video");
+      }
+      else {
+        // 너무 많지 않으면 그냥 리스트에 추가
+        await Video.updateOne(filter, update);
+        console.log("successfully updated video");
+      }
+    } 
+    catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
+    
+    res.send("successfully applied report");
     
   } catch(error) {next(error)}
   

@@ -13,14 +13,23 @@ const { v4: uuidv4 } = require('uuid');
 // 예: update 날짜
 
 const Player = new Schema({
-	
-   _id: { type: String, default: uuidv4() }
+	  
+	 // _id: { type: String, default: uuidv4() } 하면  E11000 duplicate key error collection 가 발생한다...
+   _id: String
   , battletag: String
   
-  , listNameRegion: [String] // NA, EU, KR, CN
-  , updatedRegion: Date
+  , orderNameRegion: [String] // NA, EU, KR, CN
   
+  , stats: {
+    general_String: String
+    , heroes_String: String
+  }
   
+  , updated: {
+    orderNameRegion: Date
+    , general: Date
+    , heroes: Date
+  }
     
 }, { collection: 'Player_', versionKey: false, strict: false} );
 

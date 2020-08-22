@@ -1,7 +1,5 @@
 import express from 'express';
 import Joi from 'joi';
-import crypto from 'crypto';
-import dotenv from 'dotenv';
 import cookieParser from 'cookie-parser';
 import querystring from 'querystring';
 import User from '../models/User';
@@ -12,11 +10,6 @@ var router = express.Router();
 // 의존한 강의 https://backend-intro.vlpt.us/5/01.html
 
 router.use(jwtMiddleware);
-
-
-const hash = (password) => {
-  return crypto.createHmac('sha256', process.env.SECRET_KEY).update(password).digest('hex');
-}
 
 
 // https://devlog-h.tistory.com/13  koa vs express
@@ -445,68 +438,6 @@ router.post('/apply-battletag', async (req, res, next) => {
 });
 
 
-router.put('/change-password', async (req, res, next) => {
-  
-  try {
-    
-    const { _id, passwordCurrent, passwordNew } = req.body; 
-    
-    
-    let foundUser = null;
-    try {
-      // id로 계정 찾기
-      foundUser = await User.findOne({ _id: _id }).exec();
-    } catch (error) {
-      console.log(error);
-      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
-      return;
-    }
-    
-    if(!foundUser) {
-  
-      res.json({code_situation: "aloca201"});
-      //res.status(403).send("no user by this id")
-      return;
-    }
-    
-    else if(!foundUser.validatePassword(passwordCurrent)) {
-    
-      res.json({code_situation: "aloca202"});
-      //res.status(403).send("wrong password")
-      return;
-    }
-    
-    else { // 유저를 찾았고, 비번도 맞을 때
-      
-      const filter = {_id: _id};
-      const update = {passwordHashed: hash(passwordNew)};
-      
-      try {
-        await User.updateOne(filter, update);
-        console.log("successfully changed user's password");
-        
-        // 아래와 같이해도 로그아웃이 안되네..
-        res.cookie('access_token', null, {
-          maxAge: 0, 
-          httpOnly: true
-        });
-        
-        res.status(200).send("changed password")
-        return;
-        
-      } 
-      catch (error) {
-        console.log(error);
-        res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
-        return;
-      }
-      
-    }
-      
-    
-  } catch(error) { next(error) }
-  
-});
 
 
 

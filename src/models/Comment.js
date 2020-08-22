@@ -13,7 +13,8 @@ var schemaComment = new Schema({
   , language: String
   , content: String
   
-  , listUserLike: [String]  // list of _id who liked this item
+  , listUserLike: { type: [String], default: [] }
+  , listUserReport: { type: [String], default: [] }
   
   ,created: Date
   ,updated: Date

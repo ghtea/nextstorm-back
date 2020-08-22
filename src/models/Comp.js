@@ -29,11 +29,12 @@ var schemaComp = new Schema({
   , listIdMap: [String]
   , listTag: [String]
   
-  , listIdComment: [String]  // list of _id (Comment)
-  , listIdVideo: [String] // list of _id (Video)
+  , listIdComment: { type: [String], default: [] }
+  , listIdVideo: { type: [String], default: [] }
   //, listIdLink: [String] // list of _id (Link)
   
-  , listUserLike: [String] 
+  , listUserLike: { type: [String], default: [] }
+  , listUserReport: { type: [String], default: [] }
   
   , created: Date
   , updated: Date

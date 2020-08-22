@@ -14,7 +14,8 @@ var schemaVideo= new Schema({
   , urlContent: String 
   , idContent: String 
   
-  , listUserLike: [String] 
+  , listUserLike: { type: [String], default: [] } // default not work...
+  , listUserReport: { type: [String], default: [] }
   
   ,created: Date
   ,updated: Date

@@ -1,3 +1,4 @@
+
 import express from 'express';
 
 //import queryString from 'query-string';
@@ -30,6 +31,8 @@ router.get('/:idComment', async (req, res, next) => {
 });
 
 
+
+
 router.get('/', (req, res) => {
   
   const query = req.query;
@@ -41,7 +44,10 @@ router.get('/', (req, res) => {
   if (query.limitEach) { limitEach = parseInt(query.limitEach) }
   if (query.skipEntire) { skipEntire = parseInt(query.skipEntire) }
   
-  
+  const filterReport = (query.idUser)?
+    { listUserReport: { $nin: [query.idUser] }  }
+    : {  };
+    
   const filterSubject = (query.modelSubject && query.idSubject)? 
     { 
       "subject._id": query.idSubject
@@ -66,9 +72,10 @@ router.get('/', (req, res) => {
     
     $and : [
       
-     filterSubject
-     , filterAuthor
-     , filterUserLike
+      filterReport
+      , filterSubject
+      , filterAuthor
+      , filterUserLike
      
     ]
     
@@ -160,6 +167,9 @@ router.post('/', async (req, res, next) => {
           
           // , language: String
           , content:  req.body.content
+          
+          , listUserLike: []
+          , listUserReport: []
           
           , created: Date.now()
           , updated: Date.now()
@@ -303,6 +313,71 @@ router.put('/like', async (req, res, next) => {
 });
 
 
+
+router.put('/report/:idComment', async (req, res, next) => {
+  try {
+  
+    const query = req.query;
+    
+    const idComment = req.params.idComment;
+    const idUser = query.idUser;  
+    const typeUser = query.typeUser;  
+    
+    
+    const filter = { _id:idComment};
+    let update = { $addToSet: { "listUserReport": idUser } };
+    
+    
+    try {
+      const foundComment = await Comment.findOne(filter);
+      //console.log(foundComment);
+      let lengthReportAlready = 0;
+      if (foundComment.listUserReport) {
+        lengthReportAlready = foundComment.listUserReport.length;
+      }
+      
+      let lengthLike = 0;
+      if (foundComment.listUserLike) {
+        lengthLike = foundComment.listUserLike.length;
+      }
+      
+      //console.log(lengthReportAlready);
+      //console.log(lengthLike);
+      if (lengthReportAlready >= lengthLike * 5 + 5 || typeUser === 'administrator') {
+        // 리포트 수가 좋아요 대비해서 너무 많으면 삭제 or 관리자이면
+        await Comment.deleteOne(filter);
+        
+        
+        const filterUser = {
+          "works.listIdComment": idComment
+        };
+        const updateUser = {
+          $pull: {
+            "works.listIdComment": idComment
+          }
+        };
+        await User.updateOne(filterUser, updateUser);
+        
+        
+        console.log("successfully delete comment");
+      }
+      else {
+        // 너무 많지 않으면 그냥 리스트에 추가
+        await Comment.updateOne(filter, update);
+        console.log("successfully updated comment");
+      }
+    } 
+    catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
+    
+    res.send("successfully applied report");
+    
+  } catch(error) {next(error)}
+  
+});
 
 
 

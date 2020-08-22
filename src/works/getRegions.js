@@ -35,29 +35,39 @@ const getRegions = async (battletag) => {
 	  	dictUrl["KR"] = `https://api.heroesprofile.com/api/Player/MMR?mode=json&battletag=${urlBattletag}&region=${dictIdRegion["KR"]}&api_token=${process.env.TOKEN_HP}`
 	  	dictUrl["CN"] = `https://api.heroesprofile.com/api/Player/MMR?mode=json&battletag=${urlBattletag}&region=${dictIdRegion["CN"]}&api_token=${process.env.TOKEN_HP}`
 	  	
+	  	let isBattletagRight = false;
 	  	try {
 	  		dictRes["NA"] = await axios.get(dictUrl["NA"]);
+	  		isBattletagRight = true;
 	  	} catch (error) {
 	  		console.log("error in NA");
 	  	}
 	  	try {
 	  		dictRes["EU"] = await axios.get(dictUrl["EU"]);
+	  		isBattletagRight = true;
 	  	} catch (error) {
 	  		console.log("error in EU");
 	  	}
 	  	try {
 	  		dictRes["KR"] = await axios.get(dictUrl["KR"]);
+	  		isBattletagRight = true;
 	  	} catch (error) {
 	  		console.log("error in KR");
 	  	}
 	  	try {
 	  		dictRes["CN"] = await axios.get(dictUrl["CN"]);
+	  		isBattletagRight = true;
 	  	} catch (error) {
 	  		console.log("error in CN");
 	  	}
 	  	
+	  	if (isBattletagRight === false){
+	  		//console.log("here!!!")
+	  		throw (new Error('No player with this battletag'));
+	  		return;
+	  	}
 	  	
-	  
+	  	//console.log("masaka")
 	  	let listNameRegionPlayed = Object.keys(dictRes);
 	  	
 	  	//console.log(listNameRegionPlayed)
