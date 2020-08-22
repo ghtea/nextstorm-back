@@ -244,12 +244,12 @@ router.put('/:idComment', async (req, res, next) => {
 
 
 
-router.put('/like', async (req, res, next) => {
+router.put('/like/:idComment', async (req, res, next) => {
   try {
   
     const query = req.query;
     
-    const idComment = query.idComment; 
+    const idComment = req.params.idComment;
     const idUser = query.idUser;  
     const how = query.how;
     

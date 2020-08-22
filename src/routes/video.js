@@ -251,12 +251,12 @@ router.put('/:idVideo', async (req, res, next) => {
 });
 
 
-router.put('/like', async (req, res, next) => {
+router.put('/like/:idVideo', async (req, res, next) => {
   try {
   
     const query = req.query;
     
-    const idVideo = query.idVideo; 
+    const idVideo = req.params.idVideo;
     const idUser = query.idUser;  
     const how = query.how;
     
@@ -275,7 +275,6 @@ router.put('/like', async (req, res, next) => {
       }
     }
     
-    
     try {
       await Video.updateOne(filterVideo, updateVideo);
       console.log("successfully updated video");
@@ -286,7 +285,7 @@ router.put('/like', async (req, res, next) => {
       return;
     }
     
-    res.send("successfully updated user and video")
+    res.send("successfully updated video")
     
   } catch(error) {next(error)}
   
