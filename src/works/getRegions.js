@@ -9,9 +9,8 @@ dotenv.config({
 
 const getRegions = async (battletag) => {
 	
-	try { 
-		
-	  	const urlBattletag = encodeURIComponent(battletag);
+	
+	const urlBattletag = encodeURIComponent(battletag);
 	  	
 	  	let dictIdRegion = {
 	  		NA: "1"
@@ -94,9 +93,8 @@ const getRegions = async (battletag) => {
 			return 	listNameRegionPlayedSorted;
 			
 			
-	  } catch(error) {
-	  	console.error(error);
-	  } 
+	  
+	  
 		
   }
   

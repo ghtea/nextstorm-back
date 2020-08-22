@@ -39,9 +39,27 @@ router.get('/regions/:battletagEncoded', async(req, res, next) => {
 
 			if (!foundPlayer) {
 				// 없으면 그 자리에서 만든다.
-
+				let orderNameRegion =[];
 				try {
-					const orderNameRegion = await getRegions(battletag);
+					orderNameRegion = await getRegions(battletag);
+					
+					if (orderNameRegion && orderNameRegion.length > 0) {
+						const newPlayer = new Player({
+							_id: uuidv4(),
+							battletag: battletag,
+							orderNameRegion: orderNameRegion,
+							updated: {
+								orderNameRegion: Date.now()
+							}
+						})
+		
+						await newPlayer.save();
+		
+						// 'new 모델명' 으로 만든것 바로 일반 데이터만 들은 object 으로 이용 가능 
+						console.log(newPlayer)
+						return res.json(newPlayer);
+					}
+				
 				} catch (error) {
 					return res.status(500).json({
 						error: error
@@ -51,20 +69,7 @@ router.get('/regions/:battletagEncoded', async(req, res, next) => {
 					return;*/
 				}
 
-				const newPlayer = new Player({
-					_id: uuidv4(),
-					battletag: battletag,
-					orderNameRegion: orderNameRegion,
-					updated: {
-						orderNameRegion: Date.now()
-					}
-				})
-
-				await newPlayer.save();
-
-				// 'new 모델명' 으로 만든것 바로 일반 데이터만 들은 object 으로 이용 가능 
-				console.log(newPlayer)
-				return res.json(newPlayer);
+				
 
 			}
 

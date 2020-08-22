@@ -1,20 +1,25 @@
 import express from 'express';
 import Joi from 'joi';
 import cookieParser from 'cookie-parser';
+import querystring from 'querystring';
 import User from '../models/User';
-import { generateToken } from '../works/auth/token';
+import { generateToken, jwtMiddleware } from '../works/auth/token';
 
 var router = express.Router();
 
-// 진행중 https://backend-intro.vlpt.us/5/01.html
+// 의존한 강의 https://backend-intro.vlpt.us/5/01.html
 
+router.use(jwtMiddleware);
 
 
 // https://devlog-h.tistory.com/13  koa vs express
-router.post('/register', async (req, res, next) => {
+router.post('/sign-up', async (req, res, next) => {
   
   try {
     
+    
+    /*
+    // 꼭 필요하지는 않으니 생략
     // 검증의 방법/형태
     const schema = Joi.object().keys({
         _id: Joi.string().required().error( (errors) => {
@@ -44,25 +49,24 @@ router.post('/register', async (req, res, next) => {
       console.log("validate catched something")
       return;
     }
-    
+    */
 
-    // 이메일 중복 체크
-    let existing = null;
+    // email 중복 체크
+    let existingEmail = null;
     try {
-      existing = await User.findByEmail(req.body.email);
+      existingEmail = await User.findOne({email: req.body.email}).exec(); 
     } catch (error) {
       console.log(error);
       res.status(500).send() // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
     }
 
-    if(existing) {
+    if(existingEmail) {
     // 중복되는 이메일이 있을 경우
-      console.log("email is duplicate") 
+      console.log("duplicate email") 
       //res.status(409).json({reason: "duplicate", which: "email"});
       
       // 클라이언트에서 자세한 정보를 듣고 이용하기 위해 status 코드보다는 그냥 상황 정보를 보낸다... 내 실력을 고려한 결과...
-      res.json({situation: "error", reason: "duplicate", which: "email", message:"duplicate email"});
-      
+      res.json({code_situation: "alocal01"});
       return; 
       
       // https://backend-intro.vlpt.us/3/04.html
@@ -70,19 +74,38 @@ router.post('/register', async (req, res, next) => {
     }
 
 
-
-    // 계정 생성
-    let tUser = null;
+    // battletag 중복 체크
+    let existingBattletag = null;
     try {
-      tUser = await User.registerLocal(req.body);
+      existingBattletag = await User.findOne({battletagConfirmed: req.body.battletagPending}).exec(); 
     } catch (error) {
       console.log(error);
+      res.status(500).send() // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+    }
+
+    if(existingBattletag) {
+      console.log("duplicate battletag") 
+      
+      res.json({code_situation: "alocal02"});
+      return; 
+    }
+    
+    
+    
+    // 계정 생성
+    let mongoUser = null;
+    try {
+      mongoUser = await User.register(req.body);   
+    } catch (error) {
+      console.log(error);
+      res.status(500).send() // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
     }
 
 
     let token = null;
     try {
-      token = await tUser.generateToken(); // 여기서 에러 발생하는데, 첫번째 회원가입은 되고, 그 이후에 발생하는 에러다..
+      token = await mongoUser.generateToken(); 
     } catch (error) {
       console.log(error);
       res.status(500).send(error);  // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
@@ -92,12 +115,15 @@ router.post('/register', async (req, res, next) => {
     
     // 여기까지 에러가 없었으면 성공적으로 아래와 같이 실행!
     
+    // 회원가입과 동시에 로그인 
+    // 하지만 이후 프론트엔드에서 바로 blizzard battletag 인증 시작
+    // battletagPending 은 항상 조금만 유지시키고 얼마후 초기화하는 작업이 필요하다
     
-    res.cookie('access_token', token, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7}); // cookie 에 토큰 보내주기
+    res.cookie('access_token', token, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7}); // cookie 에 토큰 보내주기  // 참고로 아마 브라우져에서 확인할 수 없으니 노력 no
     res.json(
       {
-        _id: tUser._id
-        , email: tUser.email
+        _id: mongoUser._id
+        , email: mongoUser.email
       }
     ); // 유저 정보로 응답합니다.
     //console.log(res)
@@ -110,87 +136,103 @@ router.post('/register', async (req, res, next) => {
 
 
 
-router.post('/login', async (req, res, next) => {
+
+router.post('/log-in', async (req, res, next) => {
   
   try {
     
-    const schema = Joi.object().keys({
-        email: Joi.string().email().required()
-        , password: Joi.string().required()
-    });
+    const { identification, password } = req.body; 
     
     
-    
-    const result = schema.validate(req.body); // 여기서 검증
-
-    // 스키마 검증 실패
-    if(result.error) {
-      
-      // 클라이언트에서 자세한 정보를 듣고 이용하기 위해 status 코드보다는 그냥 상황 정보를 보낸다... 내 실력을 고려한 결과...
-      res.json({situation: "error", reason: "schema", message:"check your format of email or password"});
-      
-      console.log("validate catched something")
-      return;
-    }
-    
-    
-    const { email, password } = req.body; 
-
-    let tUser = null;
+    let foundUser = null;
     try {
-        // 이메일로 계정 찾기
-        tUser = await User.findByEmail(email);
-    } catch (e) {
-        res.status(500).send(e); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
-    }
-    
-    if(!tUser) {
-    // 유저가 존재하지 않으면
-      res.json({situation: "error", reason: "none", which: "email", message:"no user with this email"});
-      //res.status(403).send("no user by this email or wrong password")
+      // 이메일로 계정 찾기
+      foundUser = await User.findOne({ email: identification }).exec();
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
       return;
     }
     
-    else if(!tUser.validatePassword(password)) {
-    // 비밀번호가 일치하지 않으면
-      res.json({situation: "error", reason: "wrong", which: "password", message:"password is wrong"});
+    if(!foundUser) {
+    // 이메일로 부터 해당 유저가 존재하지 않으면, 배틀태그로서 이용해본다!
+    
+      try {
+        // 배틀태그로 계정 찾기
+        foundUser = await User.findOne({ battletagConfirmed: identification }).exec();
+      } catch (error) {
+        console.log(error);
+        res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+        return;
+      }
+    
+      if(!foundUser) {
+        // 배틀태그 로도 battletagConfirmed 유저를 못찾으면, 우선 battletagPending 으로 찾아보기
+        
+        try {
+          // 배틀태그로 계정 찾기
+          foundUser = await User.findOne({ battletagPending: identification }).exec();
+        } catch (error) {
+          console.log(error);
+          res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+          return;
+        }
+        
+        // confirmed 중엔 못찾았지만, pending 중에서 찾았을 때, 즉 배틀태그를 아직 인증하지 않은 유저
+        if (foundUser) {
+          res.json({code_situation: "alocal03"});
+          //res.status(403).send("no user by this email or wrong password")
+          return;
+        }
+        
+        // battletagPending에도, battletagConfirmed 에도 없는 배틀태그
+        else {
+          res.json({code_situation: "alocal04"});
+          //res.status(403).send("no user by this email or wrong password")
+          return;
+        }
+    
+      } // 배틀태그 confirmed 로 못찾았을때
+      
+      else if(!foundUser.validatePassword(password)) {
+      // 배틀태그 confirmed로 찾았지만, 비밀번호가 일치하지 않으면
+        res.json({code_situation: "alocal05"});
+        //res.status(403).send("no user by this email or wrong password")
+          
+        return;
+      }
+      // 배틀태그 confirmed로 찾았고, 비번 검증까지 통과한 경우가 살아서 남아있다
+    } // if (!foundUser)
+    else if(!foundUser.validatePassword(password)) {
+    // 이메일로 찾았지만, 비밀번호가 일치하지 않으면
+      res.json({code_situation: "alocal05"});
       //res.status(403).send("no user by this email or wrong password")
         
       return;
     }
-
+    
 
     let token = null;
     try {
-      token = await tUser.generateToken();
+      token = await foundUser.generateToken();
       
       console.log("following is generated token")
       console.log(token);
     } catch (error) {
+      console.log(error);
       res.status(500).send(error);  // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
       return;
     }
     
-    
-
-    //console.log(req.cookies.access_token);
-    
-    //console.log("giving cookie!") 
-    
-    //res.append('Set-Cookie', 'foo=bar; Path=/; HttpOnly'); //test
-    
-    //res.setHeader('Access-Control-Allow-Origin', 'https://ns.avantwing.com');
-    //res.setHeader('Access-Control-Allow-Credentials', 'true'); 
+    // 평범하게 assign 할때는 foundUser.키명 으로 되지만 아래처럼 이용할때는 _doc 써야하는 듯...
+    let resUser = Object.assign({}, foundUser._doc);
+    delete resUser.passwordHashed;
+    resUser.battletag = resUser.battletagConfirmed;
     
     res.cookie('access_token', token, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7 }); 
     // cookie 브라우저가 설정하려면 별도의 추가 설정 필요
     // https://www.zerocho.com/category/NodeJS/post/5e9bf5b18dcb9c001f36b275
-    res.json(
-      {
-        _id: tUser._id
-        , email: tUser.email
-      }
-    ); // 유저 정보로 응답합니다.
+    res.json(resUser); // 유저 정보로 응답합니다.
     //console.log(res)
 
     
@@ -230,7 +272,7 @@ router.post('/exists/:key(email|username)/:value', async (req, res, next) => {
 
 
 
-router.post('/logout', async (req, res, next) => {
+router.post('/log-out', async (req, res, next) => {
   
   try {
     
@@ -246,36 +288,166 @@ router.post('/logout', async (req, res, next) => {
 });
 
 
-
+// 
 router.get('/check', async (req, res, next) => {
   
-  // jwt 미들웨어가 일해준다
+  // 여기서 jwt 미들웨어가 중간에 일해주고, req에 tokenUser 을 끼워준다
+  // tokenUser 란 token 으로 부터 알게된 유저 정보
   
   try {
     
     //console.log("hello, I'm /check")
     //console.log(req);
     
-    const { tUser } = req;
+    const { tokenUser } = req;
     
     
-    if(!tUser) {
+    if(!tokenUser) {
       console.log("there is no tUser")
       res.status(403); // forbidden
       return;
     }
-
-    res.json({
-      _id: tUser._id
-      ,email: tUser.email
-    })
+    
+    
+    let foundUser = null;
+    try {
+      // 이메일로 계정 찾기
+      foundUser = await User.findOne({ email: tokenUser.email }).exec();
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
+    
+    if(!foundUser) {
+    // 해당 유저가 존재하지 않으면
+      res.json({code_situation: "alocal06"});
+      //res.json({situation: "error", reason: "none", which: "email", message:"no user with this token"});
+      return;
+    }
+    
+    // 평범하게 assign 할때는 foundUser.키명 으로 되지만 아래처럼 이용할때는 _doc 써야하는 듯...
+    let resUser = Object.assign({}, foundUser._doc);
+    delete resUser.passwordHashed;
+    resUser.battletag = resUser.battletagConfirmed;
+    
+    res.json(resUser); // 유저 정보로 응답합니다.
     
   } catch(error) { next(error) }
   
 });
 
 
+
+router.post('/apply-battletag', async (req, res, next) => {
+  
+  try {
+    
+    const { identification, password, battletagPending } = req.body; 
+    
+    
+    let foundUser = null;
+    try {
+      // 이메일로 계정 찾기
+      foundUser = await User.findOne({ email: identification }).exec();
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
+    
+    if(!foundUser) {
+    // 이메일로 부터 해당 유저가 존재하지 않으면, 배틀태그로서 이용해본다!
+    
+     res.json({situation: "error", message:"no user with this email"});
+     //res.status(403).send("no user by this email or wrong password")
+     return;
+        
+    } // 배틀태그 confirmed 로 못찾았을때
+      
+    else if(!foundUser.validatePassword(password)) {
+    // 이메일로 찾았지만, 비밀번호가 일치하지 않으면
+      res.json({code_situation: "alocal05"});
+      //res.status(403).send("no user by this email or wrong password")
+        
+      return;
+    }
+    
+    
+    
+    // battletag 중복 체크
+    let existingBattletag = null;
+    try {
+      existingBattletag = await User.findOne({battletagConfirmed: req.body.battletagPending}).exec(); 
+    } catch (error) {
+      console.log(error);
+      res.status(500).send() // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+    }
+    
+    if(existingBattletag) {
+      console.log("duplicate battletag") 
+      res.json({code_situation: "alocal02"});
+      return; 
+    }
+    
+    
+    // battletagPending 에 신청하는 배틀태그 추가 & 추가 날짜도 업데이트
+    const update= {
+      battletagPending: battletagPending
+      , whenBattletagPendingAdded: Date.now()
+    };
+    
+    
+    try {
+      await User.updateOne({ email: identification }, update);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
+    
+    
+    let token = null;
+    try {
+      token = await foundUser.generateToken();
+      
+      console.log("following is generated token")
+      console.log(token);
+    } catch (error) {
+      console.log(error);
+      res.status(500).send(error);  // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
+    
+  
+    res.cookie('access_token', token, { httpOnly: true, maxAge: 1000 * 60 * 60 * 24 * 7 }); 
+    // cookie 브라우저가 설정하려면 별도의 추가 설정 필요
+    // https://www.zerocho.com/category/NodeJS/post/5e9bf5b18dcb9c001f36b275
+    res.json(
+      {
+        _id: foundUser._id
+        , email: foundUser.email
+        , battletagConfirmed: foundUser.battletagConfirmed
+      }
+    ); // 유저 정보로 응답합니다.
+    //console.log(res)
+
+    
+  } catch(error) { next(error) }
+  
+});
+
+
+
+
+
+
 module.exports = router;
+
+
+
+
+
 
 
 

@@ -243,17 +243,6 @@ router.post('/', async(req, res, next) => {
 
     await tComp.save();
 
-    // 유저의 works 정보에 추가
-    const update_works_comp = {
-      $push: {
-        "works.listIdComp": compReq._id
-      }
-    };
-    await User.updateOne({
-      _id: compReq.author
-    }, update_works_comp);
-
-
 
     if (req.body.comment) {
       const commentReq = req.body.comment;
@@ -413,47 +402,23 @@ router.put('/like/:idComp', async(req, res, next) => {
 
 
 
-    const filterUser = {
-      _id: idUser
-    };
     const filterComp = {
       _id: idComp
     };
-    let updateUser = {};
     let updateComp = {};
 
     if (how !== 'false') {
-      updateUser = {
-        $addToSet: {
-          "likes.listIdComp": idComp
-        }
-      }
       updateComp = {
         $addToSet: {
           "listUserLike": idUser
         }
       }
     } else {
-      updateUser = {
-        $pull: {
-          "likes.listIdComp": idComp
-        }
-      }
       updateComp = {
         $pull: {
           "listUserLike": idUser
         }
       }
-    }
-
-
-    try {
-      await User.updateOne(filterUser, updateUser);
-      console.log("successfully updated user");
-    } catch (error) {
-      console.log(error);
-      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
-      return;
     }
 
     try {
@@ -563,18 +528,6 @@ router.delete('/:idComp', async(req, res, next) => {
       await Comp.deleteOne(filter);
 
 
-
-      const filterUser = {
-        "works.listIdComp": req.params.idComp
-      };
-      const updateUser = {
-        $pull: {
-          "works.listIdComp": req.params.idComp
-        }
-      };
-
-      await User.updateOne(filterUser, updateUser);
-
       res.send("The comp has been deleted");
 
     } catch (error) {
@@ -588,6 +541,23 @@ router.delete('/:idComp', async(req, res, next) => {
   }
 
 });
+
+/*
+
+
+  const filterUser = {
+    "works.listIdComp": req.params.idComp
+  };
+  const updateUser = {
+    $pull: {
+      "works.listIdComp": req.params.idComp
+    }
+  };
+
+  await User.updateOne(filterUser, updateUser);
+
+
+*/
 
 
 

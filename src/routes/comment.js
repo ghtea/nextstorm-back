@@ -180,15 +180,6 @@ router.post('/', async (req, res, next) => {
       await mongoComment.save();
   
   
-  
-      const filterUser = {_id: req.body.author};
-      const updateUser = {
-        $push: { "works.listIdComment": req.body._id }
-      };
-      
-      await User.updateOne(filterUser, updateUser);
-      
-      
       
       if (req.body.subject.model === "Comp") {
         const filterComp = {_id: req.body.subject._id};
@@ -263,38 +254,21 @@ router.put('/like', async (req, res, next) => {
     const how = query.how;
     
     
-    const filterUser = { _id:idUser};
     const filterComment = { _id:idComment};
     let updateUser = {};
     let updateComment = {};
     
     if (how !== 'false') {
-      updateUser = {
-        $addToSet: { "likes.listIdComment": idComment }
-      }
       updateComment = {
         $addToSet: { "listUserLike": idUser }
       }
     }
     else {
-      updateUser = {
-        $pull: { "likes.listIdComment": idComment }
-      }
       updateComment = {
         $pull: { "listUserLike": idUser }
       }
     }
     
-    
-    try {
-      await User.updateOne(filterUser, updateUser);
-      console.log("successfully updated user");
-    } 
-    catch (error) {
-      console.log(error);
-      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
-      return;
-    }
     
     try {
       await Comment.updateOne(filterComment, updateComment);
@@ -347,17 +321,16 @@ router.put('/report/:idComment', async (req, res, next) => {
         // 리포트 수가 좋아요 대비해서 너무 많으면 삭제 or 관리자이면
         await Comment.deleteOne(filter);
         
-        
-        const filterUser = {
-          "works.listIdComment": idComment
-        };
-        const updateUser = {
-          $pull: {
-            "works.listIdComment": idComment
-          }
-        };
-        await User.updateOne(filterUser, updateUser);
-        
+        if (foundComment.subject.model === 'Comp') {
+          const filterComp = {
+            listIdComment: idComment
+          };
+          const updateComp = {
+            $pull: { listIdComment: idComment }
+          };
+          
+          await Comp.updateOne(filterComp, updateComp);
+        } 
         
         console.log("successfully delete comment");
       }
@@ -389,18 +362,6 @@ router.delete('/:idComment', async (req, res, next) => {
     try {
       const filter = { _id: req.params.idComment };
       await Comment.deleteOne(filter);
-      
-      
-      
-      const filterUser = {
-        "works.listIdComment": req.params.idComment
-      };
-      const updateUser = {
-        $pull: { "works.listIdComment": req.params.idComment }
-      };
-      
-      await User.updateOne(filterUser, updateUser);
-      
       
       
       

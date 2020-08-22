@@ -55,8 +55,6 @@ const User = new Schema({
   , accessed: { type: Date, default: Date.now }
 
   
-  
-  
   , profile: {
     listIdPalette: { type: [String] , default: ['Default'] }
     // hero, universe 등을 표현하는 두가지 색상 컬러  // 맨 앞의 것이 현재 설정한 것
@@ -64,7 +62,13 @@ const User = new Schema({
     , listIdBadge: { type: [String] , default: ['Default'] }
   }
   
-  , works: {
+  
+    
+}, { collection: 'User_', versionKey: false, strict: false} );
+
+
+/*
+, works: {
     listIdPlanTeam: [String]
     , listIdComp: [String]
     , listIdComment: [String]
@@ -76,11 +80,7 @@ const User = new Schema({
     , listIdComment: [String]
     , listIdVideo: [String] // for Comp-Gallery, Guide (talent, ...)
   }
-    
-    
-}, { collection: 'User_', versionKey: false, strict: false} );
-
-
+    */
 
 /*
 User.statics.findByUsername = function(username) {

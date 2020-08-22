@@ -261,20 +261,38 @@ router.put('/like', async (req, res, next) => {
     const how = query.how;
     
     
+    const filterUser = { _id:idUser};
     const filterVideo = { _id:idVideo};
+    let updateUser = {};
     let updateVideo = {};
     
     if (how !== 'false') {
+      updateUser = {
+        $addToSet: { "likes.listIdVideo": idVideo }
+      }
       updateVideo = {
         $addToSet: { "listUserLike": idUser }
       }
     }
     else {
+      updateUser = {
+        $pull: { "likes.listIdVideo": idVideo }
+      }
       updateVideo = {
         $pull: { "listUserLike": idUser }
       }
     }
     
+    
+    try {
+      await User.updateOne(filterUser, updateUser);
+      console.log("successfully updated user");
+    } 
+    catch (error) {
+      console.log(error);
+      res.status(500).send(error); // 여기선 내가 잘 모르는 에러라 뭘 할수가...   나중에 알수없는 에러라고 표시하자...
+      return;
+    }
     
     try {
       await Video.updateOne(filterVideo, updateVideo);
@@ -328,16 +346,15 @@ router.put('/report/:idVideo', async (req, res, next) => {
         await Video.deleteOne(filter);
         
         
-        if (foundVideo.subject.model === 'Comp') {
-          const filterComp = {
-            listIdVideo: idVideo
-          };
-          const updateComp = {
-            $pull: { listIdVideo: idVideo }
-          };
-          
-          await Comp.updateOne(filterComp, updateComp);
-        } 
+        const filterUser = {
+          "works.listIdVideo": idVideo
+        };
+        const updateUser = {
+          $pull: {
+            "works.listIdVideo": idVideo
+          }
+        };
+        await User.updateOne(filterUser, updateUser);
         
         
         console.log("successfully delete video");
