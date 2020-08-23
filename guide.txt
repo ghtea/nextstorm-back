@@ -1,0 +1,18 @@
+
+
+프론트엔드
+1. config 를 잠시동안 congfig_public 내용으로 대체
+2. yarn build
+3. build 된거 파일 옮기기
+
+
+백엔드
+1. 기존의 dev folder github 으로 백업
+2. 새로운 root 폴더 (예: 도메인 폴더)에서 git clone
+3. .babelrc, .env, .gitignore 수동으로 가져오기
+4. .env 에서, 	
+	백엔드 주소
+	프론트엔드 주소
+	port
+	배틀넷 api client id
+	배틀넷 api client password 입력

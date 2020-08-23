@@ -72,26 +72,27 @@ router.get('/', (req, res) => {
   const filterUserLike = (query.idUserLike) ? {
     listUserLike: query.idUserLike
   } : {};
-
-  const filterSize = (query.filterSize && query.filterSize.length !== 0) ? {
+  
+  
+  const filterSize = (query.filterSize && JSON.parse(query.filterSize).length !== 0) ? {
     size: {
       $in: JSON.parse(query.filterSize).map(element => parseInt(element))
     }
   } : {};
-
-  const filterTag = (query.filterTag && query.filterTag.length !== 0) ? {
+  
+  const filterTag = (query.filterTag && JSON.parse(query.filterTag).length !== 0) ? {
     listTag: {
       $all: JSON.parse(query.filterTag)
     }
   } : {};
 
-  const filterMap = (query.filterMap && query.filterMap.length !== 0) ? {
+  const filterMap = (query.filterMap && JSON.parse(query.filterMap).length !== 0) ? {
     listIdMap: {
       $all: JSON.parse(query.filterMap)
     }
   } : {};
 
-  const filterHero = (query.filterHero && query.filterHero.length !== 0) ? {
+  const filterHero = (query.filterHero && JSON.parse(query.filterHero).length !== 0) ? {
     listIdAllHero: {
       $all: JSON.parse(query.filterHero)
     }
@@ -107,8 +108,9 @@ router.get('/', (req, res) => {
     ]
 
   };
-
-
+  
+  console.log(limitEach)
+  console.log(skipEntire)
   // https://stackoverflow.com/questions/4421207/how-to-get-the-last-n-records-in-mongodb
   // https://docs.mongodb.com/manual/reference/operator/aggregation/sort/
   // https://stackoverflow.com/questions/24160037/skip-and-limit-in-aggregation-framework
