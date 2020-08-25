@@ -10,7 +10,8 @@ var router = express.Router();
 router.get('/:idPlanTeam', async (req, res, next) => {
   
   try {
-  
+    
+    console.log('here')
     const filter = { _id: req.params.idPlanTeam };
     
     PlanTeam.findOne(filter, (err, planTeam) => {
@@ -37,7 +38,8 @@ router.get('/', (req, res) => {
       "listAuthor": query.author
     }
     : {  };
-    
+  
+  console.log(filterAuthor)
     
   const filter={
     
@@ -92,7 +94,7 @@ router.post('/', async (req, res, next) => {
     await planTeam.save();
     
     
-    
+    /*
     // 유저의 works 정보에 추가
     const update_works_plan = {
         $push: {
@@ -100,7 +102,7 @@ router.post('/', async (req, res, next) => {
         }
       };
     await User.updateOne({ _id: (req.body.listAuthor)[0] }, update_works_plan);
-    
+    */
     
     
     res.send("new plan has been created!");

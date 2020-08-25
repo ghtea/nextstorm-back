@@ -1,4 +1,5 @@
-
+nginx 에서 
+prot 설정
 
 프론트엔드
 1. config 를 잠시동안 congfig_public 내용으로 대체
@@ -16,3 +17,5 @@
 	port
 	배틀넷 api client id
 	배틀넷 api client password 입력
+5. npm install
+6. pm2 start yarn --interpreter bash --name 이름 -- start

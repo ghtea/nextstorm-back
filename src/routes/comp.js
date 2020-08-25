@@ -270,15 +270,7 @@ router.post('/', async(req, res, next) => {
 
       await tComment.save();
 
-      // 유저의 works 정보에 추가
-      const update_works_comment = {
-        $push: {
-          "works.listIdComment": commentReq._id
-        }
-      };
-      await User.updateOne({
-        _id: commentReq.author
-      }, update_works_comment);
+      
     }
 
 
@@ -308,15 +300,7 @@ router.post('/', async(req, res, next) => {
 
       await tVideo.save();
 
-      // 유저의 works 정보에 추가
-      const update_works_video = {
-        $push: {
-          "works.listIdVideo": videoReq._id
-        }
-      };
-      await User.updateOne({
-        _id: videoReq.author
-      }, update_works_video);
+      
     }
 
 
