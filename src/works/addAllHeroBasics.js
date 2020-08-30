@@ -97,7 +97,13 @@ const addAllHeroBasics = async () => {
         ,role: objHeroes_HeroesProfile[key_HeroesProfile]["new_role"]
         ,type: objHeroes_HeroesProfile[key_HeroesProfile]["type"]
         
-        ,translations: objHeroes_HeroesProfile[key_HeroesProfile]["translations"]
+        // objHeroes_HeroesProfile[key_HeroesProfile]["translations"][4] HeroesProfile 에서 정리를 잘 안해놨다
+        ,translations: {
+          ko: key_HeroesProfile
+          , ja: key_HeroesProfile
+          , en: key_HeroesProfile
+          , zh: key_HeroesProfile
+        }
         
       }
       

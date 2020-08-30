@@ -13,7 +13,12 @@ var schemaHeroBasic = new Schema({
   ,role: String
   ,type: String
   
-  ,translations: [String]
+  ,translations: {
+    ko: String
+    , ja: String
+    , en: String
+    , zh: String
+  }
   
   ,tags: [String]
   

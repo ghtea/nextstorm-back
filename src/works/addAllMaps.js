@@ -29,7 +29,7 @@ console.log(`DB Connection Error: ${err.message}`);
 
 
 
-const addAllMaps = async () => {
+const createAllMaps = async () => {
   
   try {
     const res_HeroesProfile = await axios.get(`https://api.heroesprofile.com/api/Maps?mode=json&api_token=${process.env.TOKEN_HP}`)
@@ -340,4 +340,4 @@ const addAllMaps = async () => {
 
 
 
-addAllMaps();
+createAllMaps();

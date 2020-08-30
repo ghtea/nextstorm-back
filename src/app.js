@@ -95,7 +95,11 @@ app.use('/comment', require('./routes/comment'));
 app.use('/video', require('./routes/video'));
 //app.use('/link', require('./routes/link'));
 
+
+app.use('/version', require('./routes/version'));
 app.use('/hero-basic', require('./routes/hero-basic'));
+app.use('/hero-detail', require('./routes/hero-detail'));
+app.use('/hero-stats', require('./routes/hero-stats'));
 app.use('/map', require('./routes/map'));
 
 app.use('/auth-local', require('./routes/auth-local'));
